@@ -6,7 +6,7 @@
     <title>技能图谱</title>
     <!-- 使用ECharts进行可视化 -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-    <link rel="stylesheet" href="css/graph.css">
+    <link rel="stylesheet" href="/knowledge-graph/css/graph.css">
     <style>
         * {
             margin: 0;
@@ -392,7 +392,7 @@
         /* 右上角搜索卡片 */
         .search-card {
             position: fixed;
-            top: 20px;
+            top: 130px;
             right: 20px;
             width: 320px;
             background: white;
@@ -519,6 +519,12 @@
             line-height: 1.6;
         }
 
+        .detail-comp-name:hover,
+        .detail-skill-name:hover {
+            text-decoration: underline;
+            opacity: 0.9;
+        }
+
         .detail-skills {
             display: flex;
             flex-wrap: wrap;
@@ -540,7 +546,7 @@
         }
 
         .recommend-btn-new {
-            width: 100%;
+            width: 48%;
             padding: 10px;
             background: linear-gradient(135deg, #03A9F4, #4FC3F7);
             color: white;
@@ -555,6 +561,29 @@
         .recommend-btn-new:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(3, 169, 244, 0.3);
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .learn-btn {
+            width: 48%;
+            padding: 10px;
+            background: linear-gradient(135deg, #FF9800, #FFB74D);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .learn-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
         }
 
         .recommend-result {
@@ -620,7 +649,7 @@
 
         .toggle-card-btn {
             position: fixed;
-            top: 20px;
+            top: 130px;
             right: 20px;
             width: 44px;
             height: 44px;
@@ -680,7 +709,10 @@
             </div>
 
             <div class="recommend-section" id="recommendSection" style="display: none;">
-                <button class="recommend-btn-new" onclick="recommendFromSelection()">推荐相关竞赛</button>
+                <div class="btn-group">
+                    <button class="recommend-btn-new" onclick="recommendFromSelection()">推荐相关竞赛</button>
+                    <button class="learn-btn" onclick="goToLearn()">即刻启学</button>
+                </div>
                 <div class="recommend-result" id="recommendResult"></div>
             </div>
         </div>
@@ -726,7 +758,8 @@
         async function init() {
             try {
                 // 加载数据 - 使用正确的相对路径
-                const response = await fetch('./data/competitions.json');
+                const dataUrl = new URL('data/competitions.json', window.location.href).href;
+                const response = await fetch(dataUrl);
                 graphData = await response.json();
                 
                 // 收集所有技能
@@ -1295,7 +1328,7 @@ function renderGraph() {
             document.getElementById('detailTitle').innerHTML = `<span>竞赛详情</span>`;
             document.getElementById('detailContent').innerHTML = `
                 <div style="margin-bottom: 8px;">
-                    <strong style="color: #03A9F4; font-size: 15px;">${comp.name}</strong>
+                    <strong class="detail-comp-name" style="color: #03A9F4; font-size: 15px; cursor: pointer;" onclick="highlightNode('${comp.id}')" title="点击高亮图中节点">${comp.name}</strong>
                 </div>
                 <div style="margin-bottom: 8px;">
                     <span style="background: #E1F5FE; color: #03A9F4; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${comp.domain}</span>
@@ -1328,7 +1361,7 @@ function renderGraph() {
             document.getElementById('detailTitle').innerHTML = `<span>技能详情</span>`;
             document.getElementById('detailContent').innerHTML = `
                 <div style="margin-bottom: 8px;">
-                    <strong style="color: #4ECDC4; font-size: 15px;">${skill.name}</strong>
+                    <strong class="detail-skill-name" style="color: #4ECDC4; font-size: 15px; cursor: pointer;" onclick="highlightNode('skill_${skill.id}')" title="点击高亮图中节点">${skill.name}</strong>
                 </div>
                 <div style="color: #666; margin-bottom: 8px;">
                     关联竞赛: ${comps.length}个
@@ -1419,12 +1452,23 @@ function renderGraph() {
             const nodeIndex = allNodes.findIndex(n => n.id === id);
 
             if (nodeIndex !== -1) {
+                // 先downplay所有节点
                 chart.dispatchAction({
-                    type: 'focusNodeAdjacency',
+                    type: 'downplay',
+                    seriesIndex: 0
+                });
+                // 高亮目标节点（节点变大、颜色更亮、边框加粗）
+                chart.dispatchAction({
+                    type: 'highlight',
                     seriesIndex: 0,
                     dataIndex: nodeIndex
                 });
             }
+        }
+
+        // 跳转到孪孪伴学模块（使用 top 确保在 iframe 内时跳转整个页面，而非仅 iframe）
+        function goToLearn() {
+            window.top.location.href = '/twin-study';
         }
     </script>
 </body>

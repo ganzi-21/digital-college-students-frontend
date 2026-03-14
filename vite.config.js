@@ -3,25 +3,32 @@ import vue from '@vitejs/plugin-vue'
 import fs from 'fs'
 import path from 'path'
 
-// 自定义插件：处理 Live2D 的 JSON 文件
+// 自定义插件：处理 Live2D 的 JSON 文件 + 技能图谱 data JSON
 const live2dJsonPlugin = () => {
   return {
     name: 'live2d-json-handler',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        // 拦截 wanko 目录下的 JSON 文件请求
-        if (req.url && req.url.includes('/wanko/') && 
-            (req.url.endsWith('.model3.json') || 
-             req.url.endsWith('.motion3.json') || 
-             req.url.endsWith('.physics3.json') || 
-             req.url.endsWith('.cdi3.json'))) {
-          
-          // 构建文件路径
-          const filePath = path.join(process.cwd(), 'public', req.url.split('?')[0])
-          
-          // 检查文件是否存在
+        const urlPath = (req.url || '').split('?')[0]
+        // 技能图谱数据：确保 /knowledge-graph/data/*.json 返回 JSON，避免被 SPA 路由成 index.html
+        if (urlPath.startsWith('/knowledge-graph/data/') && urlPath.endsWith('.json')) {
+          const filePath = path.join(process.cwd(), 'public', urlPath)
           if (fs.existsSync(filePath)) {
-            // 读取并直接返回 JSON 文件内容
+            const content = fs.readFileSync(filePath, 'utf-8')
+            res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Cache-Control', 'no-cache')
+            res.end(content)
+            return
+          }
+        }
+        // 拦截 wanko 目录下的 JSON 文件请求
+        if (req.url && req.url.includes('/wanko/') &&
+            (req.url.endsWith('.model3.json') ||
+             req.url.endsWith('.motion3.json') ||
+             req.url.endsWith('.physics3.json') ||
+             req.url.endsWith('.cdi3.json'))) {
+          const filePath = path.join(process.cwd(), 'public', urlPath)
+          if (fs.existsSync(filePath)) {
             const content = fs.readFileSync(filePath, 'utf-8')
             res.setHeader('Content-Type', 'application/json')
             res.setHeader('Cache-Control', 'no-cache')
@@ -49,19 +56,19 @@ export default defineConfig({
     proxy: {
       // Neo4j 图谱代理：update/delete 必须走 8122，否则后端 8121 会 404
       '/api/neo4j-graph/update': {
-        target: 'http://localhost:8122',
+        target: 'http://172.27.58.209:8122',
         changeOrigin: true
       },
       '/api/neo4j-graph/delete': {
-        target: 'http://localhost:8122',
+        target: 'http://172.27.58.209:8122',
         changeOrigin: true
       },
       '/api/neo4j-graph': {
-        target: 'http://localhost:8122',
+        target: 'http://172.27.58.209:8122',
         changeOrigin: true
       },
       '/api': {
-        target: 'http://localhost:8121', // 后端服务地址
+        target: 'http://172.27.58.209:8121', // 后端服务地址
         changeOrigin: true, // 允许跨域
         secure: false, // 如果是https接口，需要配置这个参数
         // rewrite: (path) => path.replace(/^\/api/, '') // 如果后端不需要/api前缀，可以取消注释此行
