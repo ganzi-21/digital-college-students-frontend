@@ -144,7 +144,7 @@
 <script setup>
 import { ref, onMounted, nextTick, onUnmounted, watch, computed } from 'vue'
 import { h } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import MessageList from './MessageList.vue'
 import LearningPathMessageList from '../LearningPath/LearningPathMessageList.vue'
 import { useFlashCardGeneration } from '../../composables/useFlashCardGeneration'
@@ -254,6 +254,7 @@ const props = defineProps({
 const emit = defineEmits(['clearPathError', 'pathConfirm', 'pathPolish'])
 
 const inputTextareaRef = ref(null)
+const route = useRoute()
 
 const inputValue = ref('')
 const userAvatar = ref('')
@@ -279,7 +280,19 @@ const pathMessageList = computed(() => {
   return props.learningPathMessages || []
 })
 
+const learningSkillName = computed(() => {
+  const skill = route.query.skill
+  return Array.isArray(skill) ? skill[0] || '' : skill || ''
+})
+
+const skillLearningGuideText = computed(() => {
+  const skillName = String(learningSkillName.value || '').trim()
+  return skillName ? `当前想要学习‘${skillName}’，请给出‘${skillName}’的学习路径` : ''
+})
+
 const placeholderText = computed(() => {
+  if (skillLearningGuideText.value) return skillLearningGuideText.value
+
   return isStudyPathScene.value
     ? '请在这里输入与你“学习路径规划”相关的问题...'
     : '问孪孪伴学...'

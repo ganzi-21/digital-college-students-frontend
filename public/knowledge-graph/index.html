@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -956,6 +956,7 @@ function renderGraph() {
             layout: 'force',
             data: nodes,
             links: edges,
+            zoom: 0.72,
             roam: true,  // 允许缩放和平移
             draggable: true,
             focusNodeAdjacency: false,
@@ -1468,7 +1469,11 @@ function renderGraph() {
 
         // 跳转到孪孪伴学模块（使用 top 确保在 iframe 内时跳转整个页面，而非仅 iframe）
         function goToLearn() {
-            window.top.location.href = '/twin-study';
+            const skillName = currentTab === 'skills' && selectedItem ? selectedItem.name : '';
+            const targetUrl = skillName
+                ? `/twin-study?skill=${encodeURIComponent(skillName)}`
+                : '/twin-study';
+            window.top.location.href = targetUrl;
         }
     </script>
 </body>
